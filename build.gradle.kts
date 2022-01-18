@@ -59,7 +59,7 @@ allprojects {
 
     sonarqube {
         properties {
-            property("sonar.projectKey", "kryoniteorg_kryo-inventory-sync")
+            property("sonar.projectKey", "kryoniteorg_kryo-player-sync")
             property("sonar.organization", "kryoniteorg")
             property("sonar.host.url", "https://sonarcloud.io")
         }

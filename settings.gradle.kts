@@ -1,1 +1,1 @@
-rootProject.name = "kryo-inventory-sync"
+rootProject.name = "kryo-player-sync"
