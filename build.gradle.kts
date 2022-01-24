@@ -32,7 +32,7 @@ allprojects {
         testImplementation("io.papermc.paper:paper-api:$paperVersion")
         testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
         testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-        testImplementation("org.mockito:mockito-junit-jupiter:4.2.0")
+        testImplementation("org.mockito:mockito-junit-jupiter:4.3.0")
     }
 
     tasks.test {
