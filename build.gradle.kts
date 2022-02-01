@@ -20,16 +20,11 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven("https://papermc.io/repo/repository/maven-public/")
     }
 
     dependencies {
         val junitVersion = "5.8.2"
-        val paperVersion = "1.18.1-R0.1-SNAPSHOT"
 
-        compileOnly("io.papermc.paper:paper-api:$paperVersion")
-
-        testImplementation("io.papermc.paper:paper-api:$paperVersion")
         testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
         testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
         testImplementation("org.mockito:mockito-junit-jupiter:4.3.1")
