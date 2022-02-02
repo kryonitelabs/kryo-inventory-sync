@@ -33,6 +33,10 @@ public class PlayerSyncManager {
     this.inventoryRepository = inventoryRepository;
     this.server = server;
 
+    setupExecutors();
+  }
+
+  private void setupExecutors() {
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
     executorService.scheduleAtFixedRate(() -> {
       long now = System.currentTimeMillis();
@@ -41,14 +45,15 @@ public class PlayerSyncManager {
       inventoryNotReady.values().removeIf(timestamp -> timestamp + 5000 < now);
       switchingServers.values().removeIf(timestamp -> timestamp + 500 < now);
 
-      syncInventoryWhenMessageWasNotReceived();
+      syncInventoryWhenMessageWasNotReceivedAfterTimeout();
     }, 1, 1, TimeUnit.SECONDS);
 
     executorService.scheduleAtFixedRate(() -> server.getOnlinePlayers().forEach(this::syncInventory),
+        // TODO: change to multi save
         60, 60, TimeUnit.SECONDS);
   }
 
-  private void syncInventoryWhenMessageWasNotReceived() {
+  private void syncInventoryWhenMessageWasNotReceivedAfterTimeout() {
     long now = System.currentTimeMillis();
     Set<UUID> playersToSync = inventoryNotReady.entrySet().stream()
         .filter(entry -> entry.getValue() + 2500 < now)
