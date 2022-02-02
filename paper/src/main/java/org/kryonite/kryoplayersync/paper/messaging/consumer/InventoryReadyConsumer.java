@@ -27,10 +27,8 @@ public class InventoryReadyConsumer implements MessageCallback<InventoryReady> {
     UUID uniqueId = message.getBody().getUniqueId();
     Player player = server.getPlayer(uniqueId);
     if (player != null && player.isOnline()) {
-      log.info("Was online already");
       playerSyncManager.syncInventory(player);
     } else {
-      log.info("Add ready");
       playerSyncManager.addInventoryReady(uniqueId);
     }
   }

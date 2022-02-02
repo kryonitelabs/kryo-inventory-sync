@@ -4,11 +4,15 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.kryonite.kryoplayersync.paper.persistence.InventoryRepository;
@@ -19,17 +23,49 @@ public class PlayerSyncManager {
 
   private final Map<UUID, Long> joiningPlayers = new ConcurrentHashMap<>();
   private final Map<UUID, Long> inventoryReady = new ConcurrentHashMap<>();
+  private final Map<UUID, Long> inventoryNotReady = new ConcurrentHashMap<>();
+  private final Map<UUID, Long> switchingServers = new ConcurrentHashMap<>();
 
   private final InventoryRepository inventoryRepository;
+  private final Server server;
 
-  public PlayerSyncManager(InventoryRepository inventoryRepository) {
+  public PlayerSyncManager(InventoryRepository inventoryRepository, Server server) {
     this.inventoryRepository = inventoryRepository;
+    this.server = server;
 
-    Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+    executorService.scheduleAtFixedRate(() -> {
       long now = System.currentTimeMillis();
       joiningPlayers.values().removeIf(timestamp -> timestamp + 5000 < now);
       inventoryReady.values().removeIf(timestamp -> timestamp + 5000 < now);
+      inventoryNotReady.values().removeIf(timestamp -> timestamp + 5000 < now);
+      switchingServers.values().removeIf(timestamp -> timestamp + 500 < now);
+
+      syncInventoryWhenMessageWasNotReceived();
     }, 1, 1, TimeUnit.SECONDS);
+
+    executorService.scheduleAtFixedRate(() -> server.getOnlinePlayers().forEach(this::syncInventory),
+        60, 60, TimeUnit.SECONDS);
+  }
+
+  private void syncInventoryWhenMessageWasNotReceived() {
+    long now = System.currentTimeMillis();
+    Set<UUID> playersToSync = inventoryNotReady.entrySet().stream()
+        .filter(entry -> entry.getValue() + 2500 < now)
+        .filter(entry -> {
+          Player player = server.getPlayer(entry.getKey());
+          return player != null && player.isOnline();
+        })
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toSet());
+    inventoryNotReady.keySet().removeAll(playersToSync);
+    playersToSync.forEach(uniqueId -> {
+      Player player = server.getPlayer(uniqueId);
+      if (player != null && player.isOnline()) {
+        log.warn("Inventory of " + uniqueId + " was synced after timeout!");
+        syncInventory(player);
+      }
+    });
   }
 
   public void addJoiningPlayer(UUID uniqueId) {
@@ -44,18 +80,28 @@ public class PlayerSyncManager {
     inventoryReady.put(uniqueId, System.currentTimeMillis());
   }
 
+  public void addSwitchingServers(UUID uniqueId) {
+    switchingServers.put(uniqueId, System.currentTimeMillis());
+  }
+
+  public boolean isSwitchingServers(UUID uniqueId) {
+    return switchingServers.containsKey(uniqueId);
+  }
+
   public void syncIfReady(Player player) {
-    if (inventoryReady.remove(player.getUniqueId()) != null) {
-      log.info("Was ready");
+    UUID uniqueId = player.getUniqueId();
+    if (inventoryReady.remove(uniqueId) != null) {
+      inventoryNotReady.remove(uniqueId);
       syncInventory(player);
     } else {
-      log.info("Inv was not ready");
-      // TODO: sync after 5 seconds if message not received
+      inventoryNotReady.put(uniqueId, System.currentTimeMillis());
+      // TODO: block everything
     }
   }
 
   public void syncInventory(Player player) {
     inventoryReady.remove(player.getUniqueId());
+    inventoryNotReady.remove(player.getUniqueId());
 
     try {
       Optional<byte[]> inventory = inventoryRepository.get(player.getUniqueId());
@@ -68,5 +114,12 @@ public class PlayerSyncManager {
     }
   }
 
-  // save inventory every 60 seconds
+  public void saveInventory(Player player) {
+    try {
+      byte[] inventory = SerializeInventory.toByteArray(player.getInventory());
+      inventoryRepository.save(player.getUniqueId(), inventory);
+    } catch (IOException | SQLException exception) {
+      log.error("Failed to save inventory", exception);
+    }
+  }
 }

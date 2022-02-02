@@ -25,9 +25,7 @@ public class PlayerListener {
   }
 
   @Subscribe
-  public void onServerConnected(ServerPostConnectEvent event) {
-    log.info("initial: " + event.getPreviousServer());
-
+  public void onServerPostConnected(ServerPostConnectEvent event) {
     if (event.getPreviousServer() == null) {
       sendPluginMessage(
           event.getPlayer(),
@@ -35,8 +33,6 @@ public class PlayerListener {
       );
     }
   }
-
-  // TODO: save inventory on disconnect
 
   private void sendPluginMessage(Player player, MinecraftChannelIdentifier minecraftChannelIdentifier) {
     if (player.getCurrentServer().isPresent()) {

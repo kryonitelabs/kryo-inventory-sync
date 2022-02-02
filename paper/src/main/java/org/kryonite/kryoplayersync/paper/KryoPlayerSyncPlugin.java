@@ -20,7 +20,6 @@ import org.kryonite.kryoplayersync.paper.messaging.MessagingController;
 import org.kryonite.kryoplayersync.paper.persistence.InventoryRepository;
 import org.kryonite.kryoplayersync.paper.persistence.impl.MariaDbInventoryRepository;
 import org.kryonite.kryoplayersync.paper.playersync.PlayerSyncManager;
-import org.kryonite.kryoplayersync.paper.util.SerializeInventory;
 import org.mariadb.jdbc.Driver;
 
 @Slf4j
@@ -40,7 +39,7 @@ public class KryoPlayerSyncPlugin extends JavaPlugin {
       return;
     }
 
-    PlayerSyncManager playerSyncManager = new PlayerSyncManager(inventoryRepository);
+    PlayerSyncManager playerSyncManager = new PlayerSyncManager(inventoryRepository, getServer());
 
     MessagingController messagingController;
     try {
@@ -54,15 +53,9 @@ public class KryoPlayerSyncPlugin extends JavaPlugin {
 
     String channel = PluginMessage.NAMESPACE.getValue() + ":" + PluginMessage.SAVE_PLAYER_DATA.getValue();
     messenger.registerIncomingPluginChannel(this, channel, (channel1, player, message) -> {
-      try {
-        byte[] inventory = SerializeInventory.toByteArray(player.getInventory());
-        inventoryRepository.save(player.getUniqueId(), inventory);
-      } catch (IOException | SQLException exception) {
-        log.error("Failed to save inventory", exception);
-      }
-
+      playerSyncManager.saveInventory(player);
       messagingController.sendInventoryReadyMessage(player.getUniqueId());
-      log.info("Message sent!");
+      playerSyncManager.addSwitchingServers(player.getUniqueId());
     });
 
     channel = PluginMessage.NAMESPACE.getValue() + ":" + PluginMessage.INITIAL_JOIN.getValue();
