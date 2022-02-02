@@ -2,6 +2,7 @@ package org.kryonite.kryoplayersync.paper.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -15,6 +16,11 @@ public class PlayerListener implements Listener {
 
   @EventHandler
   public void onPlayerJoin(PlayerJoinEvent event) {
-    log.info("was present: " + playerSyncManager.removeJoiningPlayer(event.getPlayer().getUniqueId()));
+    Player player = event.getPlayer();
+    if (playerSyncManager.removeJoiningPlayer(player.getUniqueId())) {
+      playerSyncManager.syncInventory(player);
+    } else {
+      playerSyncManager.syncIfReady(player);
+    }
   }
 }

@@ -36,6 +36,8 @@ public class PlayerListener {
     }
   }
 
+  // TODO: save inventory on disconnect
+
   private void sendPluginMessage(Player player, MinecraftChannelIdentifier minecraftChannelIdentifier) {
     if (player.getCurrentServer().isPresent()) {
       ServerConnection currentServer = player.getCurrentServer().get();
