@@ -11,9 +11,7 @@ import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class PlayerListener {
 
   @Subscribe(order = PostOrder.LAST)

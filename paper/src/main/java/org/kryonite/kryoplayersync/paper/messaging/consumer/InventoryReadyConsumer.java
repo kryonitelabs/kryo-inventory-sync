@@ -2,7 +2,6 @@ package org.kryonite.kryoplayersync.paper.messaging.consumer;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.kryonite.kryomessaging.service.message.Message;
@@ -10,7 +9,6 @@ import org.kryonite.kryomessaging.service.message.MessageCallback;
 import org.kryonite.kryoplayersync.paper.messaging.message.InventoryReady;
 import org.kryonite.kryoplayersync.paper.playersync.PlayerSyncManager;
 
-@Slf4j
 @RequiredArgsConstructor
 public class InventoryReadyConsumer implements MessageCallback<InventoryReady> {
 
