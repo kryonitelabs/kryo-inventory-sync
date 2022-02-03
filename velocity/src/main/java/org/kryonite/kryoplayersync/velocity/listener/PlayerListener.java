@@ -9,7 +9,6 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.ServerPostConnectEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 
 public class PlayerListener {
@@ -33,9 +32,7 @@ public class PlayerListener {
   }
 
   private void sendPluginMessage(Player player, MinecraftChannelIdentifier minecraftChannelIdentifier) {
-    if (player.getCurrentServer().isPresent()) {
-      ServerConnection currentServer = player.getCurrentServer().get();
-      currentServer.sendPluginMessage(minecraftChannelIdentifier, new byte[] {});
-    }
+    player.getCurrentServer()
+        .ifPresent(serverConnection -> serverConnection.sendPluginMessage(minecraftChannelIdentifier, new byte[] {}));
   }
 }
