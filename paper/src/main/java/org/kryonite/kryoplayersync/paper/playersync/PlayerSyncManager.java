@@ -100,7 +100,6 @@ public class PlayerSyncManager {
       syncInventory(player);
     } else {
       inventoryNotReady.put(uniqueId, System.currentTimeMillis());
-      // TODO: block everything
     }
   }
 
