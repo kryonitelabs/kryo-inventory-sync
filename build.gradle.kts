@@ -24,10 +24,12 @@ allprojects {
 
     dependencies {
         val junitVersion = "5.8.2"
+        val mockitoVersion = "4.3.1"
 
         testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
         testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-        testImplementation("org.mockito:mockito-junit-jupiter:4.3.1")
+        testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
+        testImplementation("org.mockito:mockito-inline:$mockitoVersion")
     }
 
     tasks.test {

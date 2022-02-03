@@ -46,7 +46,7 @@ public class PlayerSyncManager {
       switchingServers.values().removeIf(timestamp -> timestamp + 500 < now);
 
       syncInventoryWhenMessageWasNotReceivedAfterTimeout();
-    }, 1, 1, TimeUnit.SECONDS);
+    }, 500, 500, TimeUnit.MILLISECONDS);
 
     executorService.scheduleAtFixedRate(() -> server.getOnlinePlayers().forEach(this::syncInventory),
         // TODO: change to multi save
