@@ -3,13 +3,17 @@ package org.kryonite.kryoplayersync.paper;
 import com.rabbitmq.client.Address;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import java.io.File;
 import java.io.IOException;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.java.JavaPluginLoader;
+import org.jetbrains.annotations.NotNull;
 import org.kryonite.kryomessaging.api.MessagingService;
 import org.kryonite.kryomessaging.service.DefaultActiveMqConnectionFactory;
 import org.kryonite.kryomessaging.service.DefaultMessagingService;
@@ -26,6 +30,20 @@ public class KryoPlayerSyncPlugin extends JavaPlugin {
 
   private HikariDataSource hikariDataSource;
   private MessagingService messagingService;
+
+  public KryoPlayerSyncPlugin() {
+  }
+
+  protected KryoPlayerSyncPlugin(@NotNull JavaPluginLoader loader,
+                                 @NotNull PluginDescriptionFile description,
+                                 @NotNull File dataFolder,
+                                 @NotNull File file,
+                                 HikariDataSource hikariDataSource,
+                                 MessagingService messagingService) {
+    super(loader, description, dataFolder, file);
+    this.hikariDataSource = hikariDataSource;
+    this.messagingService = messagingService;
+  }
 
   @Override
   public void onEnable() {

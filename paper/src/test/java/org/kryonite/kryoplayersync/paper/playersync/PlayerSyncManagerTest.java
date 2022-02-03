@@ -1,5 +1,7 @@
 package org.kryonite.kryoplayersync.paper.playersync;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -15,6 +17,7 @@ import org.awaitility.Awaitility;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kryonite.kryoplayersync.paper.persistence.InventoryRepository;
@@ -113,7 +116,7 @@ class PlayerSyncManagerTest {
   }
 
   @Test
-  void shouldForceSyncInventory_WhenInventoryWasNotReadyButTwoAndAHalfSecondsHavePassed() throws SQLException {
+  void shouldForceSyncInventory_WhenInventoryWasNotReadyButTimoutWasExceeded() throws SQLException {
     // Arrange
     UUID uniqueId = UUID.randomUUID();
     Player player = mock(Player.class, Answers.RETURNS_DEEP_STUBS);
@@ -133,5 +136,28 @@ class PlayerSyncManagerTest {
         .untilAsserted(() -> {
           verify(inventoryRepositoryMock).get(uniqueId);
         });
+  }
+
+  @Test
+  void shouldSaveInventory() throws SQLException {
+    // Arrange
+    UUID uniqueId = UUID.randomUUID();
+    Player player = mock(Player.class);
+    PlayerInventory playerInventory = mock(PlayerInventory.class);
+    ItemStack itemStack = mock(ItemStack.class);
+
+    when(player.getInventory()).thenReturn(playerInventory);
+    when(player.getUniqueId()).thenReturn(uniqueId);
+    when(playerInventory.getContents()).thenReturn(new ItemStack[] {
+        itemStack,
+        null
+    });
+    when(itemStack.serializeAsBytes()).thenReturn(new byte[] {});
+
+    // Act
+    testee.saveInventory(player);
+
+    // Assert
+    verify(inventoryRepositoryMock).save(eq(uniqueId), any());
   }
 }
