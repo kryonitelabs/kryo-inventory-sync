@@ -9,7 +9,7 @@ public interface InventoryRepository {
 
   void save(UUID uniqueId, byte[] inventory) throws SQLException;
 
-  void saveAll(Map<UUID , byte[]> inventories) throws SQLException;
+  void saveAll(Map<UUID, byte[]> inventories) throws SQLException;
 
   Optional<byte[]> get(UUID uniqueId) throws SQLException;
 }

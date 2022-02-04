@@ -3,11 +3,14 @@ package org.kryonite.kryoplayersync.paper.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SerializeInventory {
 
   public static byte[] toByteArray(PlayerInventory playerInventory) throws IOException {
