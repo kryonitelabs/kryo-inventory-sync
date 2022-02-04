@@ -1,0 +1,6 @@
+name: KryoPlayerSync
+author: Kryonite Labs
+version: 0.1.0
+main: org.kryonite.kryoplayersync.paper.KryoPlayerSyncPlugin
+
+api-version: 1.18
