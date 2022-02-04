@@ -48,9 +48,7 @@ public class PlayerSyncManager {
       syncInventoryWhenMessageWasNotReceivedAfterTimeout();
     }, 500, 500, TimeUnit.MILLISECONDS);
 
-    executorService.scheduleAtFixedRate(() -> server.getOnlinePlayers().forEach(this::syncInventory),
-        // TODO: change to multi save
-        60, 60, TimeUnit.SECONDS);
+    executorService.scheduleAtFixedRate(new SyncAllPlayers(inventoryRepository, server), 60, 60, TimeUnit.SECONDS);
   }
 
   private void syncInventoryWhenMessageWasNotReceivedAfterTimeout() {

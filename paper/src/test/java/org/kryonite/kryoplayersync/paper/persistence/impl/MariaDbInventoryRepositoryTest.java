@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -73,5 +74,31 @@ class MariaDbInventoryRepositoryTest {
     assertEquals(inventory, result.get());
     verify(dataSourceMock.getConnection(), atLeastOnce()).prepareStatement(GET_INVENTORY);
     verify(dataSourceMock.getConnection().prepareStatement(GET_INVENTORY)).setString(1, uniqueId.toString());
+  }
+
+  @Test
+  void shouldSaveAllInventories() throws SQLException {
+    // Arrange
+    UUID uniqueId1 = UUID.randomUUID();
+    UUID uniqueId2 = UUID.randomUUID();
+    byte[] inventory1 = new byte[] {12, 13};
+    byte[] inventory2 = new byte[] {14, 15};
+
+    MariaDbInventoryRepository testee = new MariaDbInventoryRepository(dataSourceMock);
+
+    // Act
+    testee.saveAll(Map.of(uniqueId1, inventory1, uniqueId2, inventory2));
+
+    // Assert
+    verify(dataSourceMock.getConnection()).prepareStatement(INSERT_INVENTORY);
+    verify(dataSourceMock.getConnection().prepareStatement(INSERT_INVENTORY)).setString(1, uniqueId1.toString());
+    verify(dataSourceMock.getConnection().prepareStatement(INSERT_INVENTORY)).setBytes(2, inventory1);
+    verify(dataSourceMock.getConnection().prepareStatement(INSERT_INVENTORY)).setBytes(3, inventory1);
+    verify(dataSourceMock.getConnection().prepareStatement(INSERT_INVENTORY)).setString(1, uniqueId2.toString());
+    verify(dataSourceMock.getConnection().prepareStatement(INSERT_INVENTORY)).setBytes(2, inventory2);
+    verify(dataSourceMock.getConnection().prepareStatement(INSERT_INVENTORY)).setBytes(3, inventory2);
+
+    verify(dataSourceMock.getConnection().prepareStatement(INSERT_INVENTORY)).executeBatch();
+    verify(dataSourceMock.getConnection()).commit();
   }
 }

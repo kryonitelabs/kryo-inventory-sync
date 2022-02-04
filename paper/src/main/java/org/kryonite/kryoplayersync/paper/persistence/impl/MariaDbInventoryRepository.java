@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.kryonite.kryoplayersync.paper.persistence.InventoryRepository;
@@ -40,6 +41,25 @@ public class MariaDbInventoryRepository implements InventoryRepository {
       preparedStatement.setBytes(3, inventory);
 
       preparedStatement.executeUpdate();
+    }
+  }
+
+  @Override
+  public void saveAll(Map<UUID, byte[]> inventories) throws SQLException {
+    try (Connection connection = dataSource.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(INSERT_INVENTORY)) {
+      connection.setAutoCommit(false);
+
+      for (Map.Entry<UUID, byte[]> entry : inventories.entrySet()) {
+        preparedStatement.setString(1, entry.getKey().toString());
+        preparedStatement.setBytes(2, entry.getValue());
+        preparedStatement.setBytes(3, entry.getValue());
+        preparedStatement.addBatch();
+      }
+
+      preparedStatement.executeBatch();
+      connection.commit();
+      connection.setAutoCommit(true);
     }
   }
 
