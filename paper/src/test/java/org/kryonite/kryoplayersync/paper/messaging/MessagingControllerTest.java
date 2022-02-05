@@ -51,7 +51,11 @@ class MessagingControllerTest {
 
     String queue = PLAYER_DATA_READY_EXCHANGE + "_" + serverName;
     verify(messagingServiceMock).bindQueueToExchange(queue, PLAYER_DATA_READY_EXCHANGE);
-    verify(messagingServiceMock).startConsuming(eq(queue), any(PlayerDataReadyConsumer.class), eq(PlayerDataReady.class));
+    verify(messagingServiceMock).startConsuming(
+        eq(queue),
+        any(PlayerDataReadyConsumer.class),
+        eq(PlayerDataReady.class)
+    );
   }
 
   @Test
