@@ -6,18 +6,18 @@ import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.kryonite.kryomessaging.service.message.Message;
 import org.kryonite.kryomessaging.service.message.MessageCallback;
-import org.kryonite.kryoplayersync.paper.messaging.message.InventoryReady;
-import org.kryonite.kryoplayersync.paper.playersync.PlayerSyncManager;
+import org.kryonite.kryoplayersync.paper.messaging.message.PlayerDataReady;
+import org.kryonite.kryoplayersync.paper.playerdatasync.PlayerDataSyncManager;
 
 @RequiredArgsConstructor
-public class InventoryReadyConsumer implements MessageCallback<InventoryReady> {
+public class PlayerDataReadyConsumer implements MessageCallback<PlayerDataReady> {
 
   private final Server server;
   private final String serverName;
-  private final PlayerSyncManager playerSyncManager;
+  private final PlayerDataSyncManager playerDataSyncManager;
 
   @Override
-  public void messageReceived(Message<InventoryReady> message) {
+  public void messageReceived(Message<PlayerDataReady> message) {
     if (serverName.equals(message.getBody().getSender())) {
       return;
     }
@@ -25,9 +25,9 @@ public class InventoryReadyConsumer implements MessageCallback<InventoryReady> {
     UUID uniqueId = message.getBody().getUniqueId();
     Player player = server.getPlayer(uniqueId);
     if (player != null && player.isOnline()) {
-      playerSyncManager.syncInventory(player);
+      playerDataSyncManager.loadPlayerData(player);
     } else {
-      playerSyncManager.addInventoryReady(uniqueId);
+      playerDataSyncManager.addPlayerDataReady(uniqueId);
     }
   }
 }

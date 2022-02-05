@@ -6,14 +6,14 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.messaging.Messenger;
 import org.kryonite.kryoplayersync.common.PluginMessage;
 import org.kryonite.kryoplayersync.paper.messaging.MessagingController;
-import org.kryonite.kryoplayersync.paper.playersync.PlayerSyncManager;
+import org.kryonite.kryoplayersync.paper.playerdatasync.PlayerDataSyncManager;
 
 @RequiredArgsConstructor
 public class PluginMessageManager {
 
   private final Plugin plugin;
   private final Server server;
-  private final PlayerSyncManager playerSyncManager;
+  private final PlayerDataSyncManager playerDataSyncManager;
   private final MessagingController messagingController;
 
   public void setupPluginMessageListener() {
@@ -21,13 +21,13 @@ public class PluginMessageManager {
 
     String channel = PluginMessage.NAMESPACE.getValue() + ":" + PluginMessage.SAVE_PLAYER_DATA.getValue();
     messenger.registerIncomingPluginChannel(plugin, channel, (channelName, player, message) -> {
-      playerSyncManager.saveInventory(player);
-      messagingController.sendInventoryReadyMessage(player.getUniqueId());
-      playerSyncManager.addSwitchingServers(player.getUniqueId());
+      playerDataSyncManager.savePlayerData(player);
+      messagingController.sendPlayerDataReadyMessage(player.getUniqueId());
+      playerDataSyncManager.addSwitchingServers(player.getUniqueId());
     });
 
     channel = PluginMessage.NAMESPACE.getValue() + ":" + PluginMessage.INITIAL_JOIN.getValue();
     messenger.registerIncomingPluginChannel(plugin, channel, (channelName, player, message) ->
-        playerSyncManager.addJoiningPlayer(player.getUniqueId()));
+        playerDataSyncManager.addJoiningPlayer(player.getUniqueId()));
   }
 }

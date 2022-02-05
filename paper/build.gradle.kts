@@ -5,6 +5,7 @@ repositories {
 
 dependencies {
     val paperVersion = "1.18.1-R0.1-SNAPSHOT"
+    val vaultVersion = "1.7"
 
     implementation(project(":kryo-player-sync-common"))
 
@@ -13,6 +14,9 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.0.1")
 
     compileOnly("io.papermc.paper:paper-api:$paperVersion")
+    compileOnly("com.github.MilkBowl:VaultAPI:$vaultVersion")
+
     testImplementation("io.papermc.paper:paper-api:$paperVersion")
+    testImplementation("com.github.MilkBowl:VaultAPI:$vaultVersion")
     testImplementation("org.awaitility:awaitility:4.1.1")
 }

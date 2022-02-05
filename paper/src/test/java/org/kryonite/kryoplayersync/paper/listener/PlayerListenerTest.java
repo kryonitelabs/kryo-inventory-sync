@@ -12,7 +12,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kryonite.kryoplayersync.paper.playersync.PlayerSyncManager;
+import org.kryonite.kryoplayersync.paper.playerdatasync.PlayerDataSyncManager;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,7 +24,7 @@ class PlayerListenerTest {
   private PlayerListener testee;
 
   @Mock
-  private PlayerSyncManager playerSyncManagerMock;
+  private PlayerDataSyncManager playerDataSyncManagerMock;
 
   @Test
   void shouldSyncInventory_WhenPlayerIsJoiningTheNetwork() {
@@ -32,13 +32,13 @@ class PlayerListenerTest {
     Player player = mock(Player.class);
     PlayerJoinEvent playerJoinEvent = new PlayerJoinEvent(player, Component.empty());
 
-    when(playerSyncManagerMock.removeJoiningPlayer(any())).thenReturn(true);
+    when(playerDataSyncManagerMock.removeJoiningPlayer(any())).thenReturn(true);
 
     // Act
     testee.onPlayerJoin(playerJoinEvent);
 
     // Assert
-    verify(playerSyncManagerMock).syncInventory(player);
+    verify(playerDataSyncManagerMock).loadPlayerData(player);
   }
 
   @Test
@@ -47,13 +47,13 @@ class PlayerListenerTest {
     Player player = mock(Player.class);
     PlayerJoinEvent playerJoinEvent = new PlayerJoinEvent(player, Component.empty());
 
-    when(playerSyncManagerMock.removeJoiningPlayer(any())).thenReturn(false);
+    when(playerDataSyncManagerMock.removeJoiningPlayer(any())).thenReturn(false);
 
     // Act
     testee.onPlayerJoin(playerJoinEvent);
 
     // Assert
-    verify(playerSyncManagerMock).syncIfReady(player);
+    verify(playerDataSyncManagerMock).syncIfReady(player);
   }
 
   @Test
@@ -66,13 +66,13 @@ class PlayerListenerTest {
         PlayerQuitEvent.QuitReason.DISCONNECTED
     );
 
-    when(playerSyncManagerMock.isSwitchingServers(any())).thenReturn(false);
+    when(playerDataSyncManagerMock.isSwitchingServers(any())).thenReturn(false);
 
     // Act
     testee.onPlayerQuit(playerQuitEvent);
 
     // Assert
-    verify(playerSyncManagerMock).saveInventory(player);
+    verify(playerDataSyncManagerMock).savePlayerData(player);
   }
 
   @Test
@@ -85,12 +85,12 @@ class PlayerListenerTest {
         PlayerQuitEvent.QuitReason.DISCONNECTED
     );
 
-    when(playerSyncManagerMock.isSwitchingServers(any())).thenReturn(true);
+    when(playerDataSyncManagerMock.isSwitchingServers(any())).thenReturn(true);
 
     // Act
     testee.onPlayerQuit(playerQuitEvent);
 
     // Assert
-    verify(playerSyncManagerMock, never()).saveInventory(player);
+    verify(playerDataSyncManagerMock, never()).savePlayerData(player);
   }
 }

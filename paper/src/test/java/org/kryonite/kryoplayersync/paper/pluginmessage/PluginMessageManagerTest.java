@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kryonite.kryoplayersync.common.PluginMessage;
 import org.kryonite.kryoplayersync.paper.messaging.MessagingController;
-import org.kryonite.kryoplayersync.paper.playersync.PlayerSyncManager;
+import org.kryonite.kryoplayersync.paper.playerdatasync.PlayerDataSyncManager;
 import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -29,7 +29,7 @@ class PluginMessageManagerTest {
   private Server serverMock;
 
   @Mock
-  private PlayerSyncManager playerSyncManagerMock;
+  private PlayerDataSyncManager playerDataSyncManagerMock;
 
   @Mock
   private MessagingController messagingControllerMock;
