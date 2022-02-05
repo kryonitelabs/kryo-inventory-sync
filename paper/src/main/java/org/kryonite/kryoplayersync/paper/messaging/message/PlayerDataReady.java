@@ -4,7 +4,7 @@ import java.util.UUID;
 import lombok.Data;
 
 @Data
-public class InventoryReady {
+public class PlayerDataReady {
 
   private final UUID uniqueId;
   private final String sender;

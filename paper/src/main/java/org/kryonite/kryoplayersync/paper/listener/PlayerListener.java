@@ -6,28 +6,28 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.kryonite.kryoplayersync.paper.playersync.PlayerSyncManager;
+import org.kryonite.kryoplayersync.paper.playerdatasync.PlayerDataSyncManager;
 
 @RequiredArgsConstructor
 public class PlayerListener implements Listener {
 
-  private final PlayerSyncManager playerSyncManager;
+  private final PlayerDataSyncManager playerDataSyncManager;
 
   @EventHandler
   public void onPlayerJoin(PlayerJoinEvent event) {
     Player player = event.getPlayer();
-    if (playerSyncManager.removeJoiningPlayer(player.getUniqueId())) {
-      playerSyncManager.syncInventory(player);
+    if (playerDataSyncManager.removeJoiningPlayer(player.getUniqueId())) {
+      playerDataSyncManager.loadPlayerData(player);
     } else {
-      playerSyncManager.syncIfReady(player);
+      playerDataSyncManager.syncIfReady(player);
     }
   }
 
   @EventHandler
   public void onPlayerQuit(PlayerQuitEvent event) {
     Player player = event.getPlayer();
-    if (!playerSyncManager.isSwitchingServers(player.getUniqueId())) {
-      playerSyncManager.saveInventory(player);
+    if (!playerDataSyncManager.isSwitchingServers(player.getUniqueId())) {
+      playerDataSyncManager.savePlayerData(player);
     }
   }
 }

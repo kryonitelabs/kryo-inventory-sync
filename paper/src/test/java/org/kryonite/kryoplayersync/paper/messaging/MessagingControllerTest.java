@@ -1,6 +1,6 @@
 package org.kryonite.kryoplayersync.paper.messaging;
 
-import static org.kryonite.kryoplayersync.paper.messaging.MessagingController.INVENTORY_READY_EXCHANGE;
+import static org.kryonite.kryoplayersync.paper.messaging.MessagingController.PLAYER_DATA_READY_EXCHANGE;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kryonite.kryomessaging.api.MessagingService;
 import org.kryonite.kryomessaging.service.message.Message;
-import org.kryonite.kryoplayersync.paper.messaging.consumer.InventoryReadyConsumer;
-import org.kryonite.kryoplayersync.paper.messaging.message.InventoryReady;
-import org.kryonite.kryoplayersync.paper.playersync.PlayerSyncManager;
+import org.kryonite.kryoplayersync.paper.messaging.consumer.PlayerDataReadyConsumer;
+import org.kryonite.kryoplayersync.paper.messaging.message.PlayerDataReady;
+import org.kryonite.kryoplayersync.paper.playerdatasync.PlayerDataSyncManager;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -34,24 +34,28 @@ class MessagingControllerTest {
   private Server serverMock;
 
   @Mock
-  private PlayerSyncManager playerSyncManagerMock;
+  private PlayerDataSyncManager playerDataSyncManagerMock;
 
   @BeforeEach
   void setup() {
-    testee = new MessagingController(messagingServiceMock, serverMock, playerSyncManagerMock, serverName);
+    testee = new MessagingController(messagingServiceMock, serverMock, playerDataSyncManagerMock, serverName);
   }
 
   @Test
   void shouldSetupInventoryReady() throws IOException {
     // Arrange - Act
-    testee.setupInventoryReady();
+    testee.setupPlayerDataReady();
 
     // Assert
-    verify(messagingServiceMock).setupExchange(INVENTORY_READY_EXCHANGE, BuiltinExchangeType.FANOUT);
+    verify(messagingServiceMock).setupExchange(PLAYER_DATA_READY_EXCHANGE, BuiltinExchangeType.FANOUT);
 
-    String queue = INVENTORY_READY_EXCHANGE + "_" + serverName;
-    verify(messagingServiceMock).bindQueueToExchange(queue, INVENTORY_READY_EXCHANGE);
-    verify(messagingServiceMock).startConsuming(eq(queue), any(InventoryReadyConsumer.class), eq(InventoryReady.class));
+    String queue = PLAYER_DATA_READY_EXCHANGE + "_" + serverName;
+    verify(messagingServiceMock).bindQueueToExchange(queue, PLAYER_DATA_READY_EXCHANGE);
+    verify(messagingServiceMock).startConsuming(
+        eq(queue),
+        any(PlayerDataReadyConsumer.class),
+        eq(PlayerDataReady.class)
+    );
   }
 
   @Test
@@ -60,11 +64,11 @@ class MessagingControllerTest {
     UUID uniqueId = UUID.randomUUID();
 
     // Act
-    testee.sendInventoryReadyMessage(uniqueId);
+    testee.sendPlayerDataReadyMessage(uniqueId);
 
     // Assert
     verify(messagingServiceMock).sendMessage(
-        Message.create(INVENTORY_READY_EXCHANGE, new InventoryReady(uniqueId, serverName))
+        Message.create(PLAYER_DATA_READY_EXCHANGE, new PlayerDataReady(uniqueId, serverName))
     );
   }
 }

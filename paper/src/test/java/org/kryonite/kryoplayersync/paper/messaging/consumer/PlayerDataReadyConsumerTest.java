@@ -13,27 +13,27 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kryonite.kryomessaging.service.message.Message;
-import org.kryonite.kryoplayersync.paper.messaging.message.InventoryReady;
-import org.kryonite.kryoplayersync.paper.playersync.PlayerSyncManager;
+import org.kryonite.kryoplayersync.paper.messaging.message.PlayerDataReady;
+import org.kryonite.kryoplayersync.paper.playerdatasync.PlayerDataSyncManager;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class InventoryReadyConsumerTest {
+class PlayerDataReadyConsumerTest {
 
   private final String serverName = "testee";
 
-  private InventoryReadyConsumer testee;
+  private PlayerDataReadyConsumer testee;
 
   @Mock
   private Server serverMock;
 
   @Mock
-  private PlayerSyncManager playerSyncManagerMock;
+  private PlayerDataSyncManager playerDataSyncManagerMock;
 
   @BeforeEach
   void setup() {
-    testee = new InventoryReadyConsumer(serverMock, serverName, playerSyncManagerMock);
+    testee = new PlayerDataReadyConsumer(serverMock, serverName, playerDataSyncManagerMock);
   }
 
   @Test
@@ -41,7 +41,7 @@ class InventoryReadyConsumerTest {
     // Arrange
     UUID uniqueId = UUID.randomUUID();
     String sender = "another-server";
-    Message<InventoryReady> message = Message.create("test", new InventoryReady(uniqueId, sender));
+    Message<PlayerDataReady> message = Message.create("test", new PlayerDataReady(uniqueId, sender));
 
     Player player = mock(Player.class);
     when(player.isOnline()).thenReturn(true);
@@ -51,7 +51,7 @@ class InventoryReadyConsumerTest {
     testee.messageReceived(message);
 
     // Assert
-    verify(playerSyncManagerMock).syncInventory(player);
+    verify(playerDataSyncManagerMock).loadPlayerData(player);
   }
 
   @Test
@@ -59,7 +59,7 @@ class InventoryReadyConsumerTest {
     // Arrange
     UUID uniqueId = UUID.randomUUID();
     String sender = "another-server";
-    Message<InventoryReady> message = Message.create("test", new InventoryReady(uniqueId, sender));
+    Message<PlayerDataReady> message = Message.create("test", new PlayerDataReady(uniqueId, sender));
 
     Player player = mock(Player.class);
     when(player.isOnline()).thenReturn(false);
@@ -69,20 +69,20 @@ class InventoryReadyConsumerTest {
     testee.messageReceived(message);
 
     // Assert
-    verify(playerSyncManagerMock).addInventoryReady(uniqueId);
+    verify(playerDataSyncManagerMock).addPlayerDataReady(uniqueId);
   }
 
   @Test
   void shouldDoNothing_WhenSenderIsCurrentServer() {
     // Arrange
     UUID uniqueId = UUID.randomUUID();
-    Message<InventoryReady> message = Message.create("test", new InventoryReady(uniqueId, serverName));
+    Message<PlayerDataReady> message = Message.create("test", new PlayerDataReady(uniqueId, serverName));
 
     // Act
     testee.messageReceived(message);
 
     // Assert
-    verify(playerSyncManagerMock, never()).syncInventory(any());
-    verify(playerSyncManagerMock, never()).addInventoryReady(uniqueId);
+    verify(playerDataSyncManagerMock, never()).loadPlayerData(any());
+    verify(playerDataSyncManagerMock, never()).addPlayerDataReady(uniqueId);
   }
 }

@@ -3,6 +3,8 @@ package org.kryonite.kryoplayersync.paper;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.logging.Logger;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Server;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPluginLoader;
@@ -62,12 +65,44 @@ class KryoPlayerSyncPluginTest {
 
   @Test
   void shouldSetupListener() throws SQLException, IOException {
-    // Arrange - Act
+    // Arrange
+    when(serverMock.getPluginManager().isPluginEnabled("Vault")).thenReturn(true);
+    when(serverMock.getServicesManager().getRegistration(Economy.class).getProvider()).thenReturn(mock(Economy.class));
+
+    // Act
     testee.onEnable();
 
     // Assert
-    verify(dataSourceMock.getConnection()).prepareStatement(anyString());
+    verify(dataSourceMock.getConnection(), times(2)).prepareStatement(anyString());
     verify(messagingServiceMock).setupExchange(any(), any());
     verify(serverMock.getPluginManager()).registerEvents(any(PlayerListener.class), any());
+  }
+
+  @Test
+  void shouldShutdownServer_WhenInventoryRepositoryNotAvailable() throws SQLException, IOException {
+    // Arrange
+    when(dataSourceMock.getConnection()).thenThrow(SQLException.class);
+
+    // Act
+    testee.onEnable();
+
+    // Assert
+    verify(serverMock).shutdown();
+    verify(messagingServiceMock, never()).setupExchange(any(), any());
+    verify(serverMock.getPluginManager(), never()).registerEvents(any(PlayerListener.class), any());
+  }
+
+  @Test
+  void shouldShutdownServer_WhenVaultPluginNotAvailable() throws IOException {
+    // Arrange
+    when(serverMock.getPluginManager().isPluginEnabled("Vault")).thenReturn(false);
+
+    // Act
+    testee.onEnable();
+
+    // Assert
+    verify(serverMock).shutdown();
+    verify(messagingServiceMock, never()).setupExchange(any(), any());
+    verify(serverMock.getPluginManager(), never()).registerEvents(any(PlayerListener.class), any());
   }
 }
