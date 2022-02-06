@@ -1,11 +1,13 @@
 package org.kryonite.kryoplayersync.paper.playerdatasync;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -70,6 +72,24 @@ class InventorySyncManagerTest {
   }
 
   @Test
+  void shouldReturnFailedFuture_WhenSerializeInventoryFails() {
+    // Arrange
+    Player player = mock(Player.class);
+    PlayerInventory playerInventory = mock(PlayerInventory.class);
+
+    when(player.getInventory()).thenReturn(playerInventory);
+
+    try (MockedStatic<SerializeInventory> serializeInventoryMockedStatic = mockStatic(SerializeInventory.class)) {
+      serializeInventoryMockedStatic
+          .when(() -> SerializeInventory.toByteArray(playerInventory))
+          .thenThrow(new IOException());
+
+      // Act - Assert
+      assertThrows(ExecutionException.class, () -> testee.saveInventory(player).get());
+    }
+  }
+
+  @Test
   void shouldLoadInventory() {
     // Arrange
     Player player = mock(Player.class, Answers.RETURNS_DEEP_STUBS);
@@ -117,6 +137,32 @@ class InventorySyncManagerTest {
         .atMost(1, TimeUnit.SECONDS)
         .untilAsserted(() -> serverMock.getScheduler().runTask(pluginMock,
             () -> player.kick(Component.text("Failed to load player data. Please try again"))));
+  }
+
+  @Test
+  void shouldKickPlayer_WhenSerializeInventoryFails() {
+    // Arrange
+    Player player = mock(Player.class, Answers.RETURNS_DEEP_STUBS);
+    UUID uniqueId = UUID.randomUUID();
+    byte[] inventory = new byte[] {11, 12};
+
+    when(player.getUniqueId()).thenReturn(uniqueId);
+    when(inventoryRepositoryMock.get(uniqueId)).thenReturn(CompletableFuture.completedFuture(Optional.of(inventory)));
+
+    try (MockedStatic<SerializeInventory> serializeInventoryMockedStatic = mockStatic(SerializeInventory.class)) {
+      serializeInventoryMockedStatic
+          .when(() -> SerializeInventory.toItemStackArray(inventory))
+          .thenThrow(new IOException());
+
+      // Act
+      testee.loadInventory(player);
+
+      // Assert
+      Awaitility.await()
+          .atMost(1, TimeUnit.SECONDS)
+          .untilAsserted(() -> serverMock.getScheduler().runTask(pluginMock,
+              () -> player.kick(Component.text("Failed to load player data. Please try again"))));
+    }
   }
 
   @Test

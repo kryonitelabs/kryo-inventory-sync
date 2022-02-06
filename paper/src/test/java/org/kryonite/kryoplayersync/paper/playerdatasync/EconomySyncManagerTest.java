@@ -1,5 +1,6 @@
 package org.kryonite.kryoplayersync.paper.playerdatasync;
 
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -116,6 +117,7 @@ class EconomySyncManagerTest {
     when(player2.getUniqueId()).thenReturn(uniqueId2);
     when(economyMock.getBalance(player1)).thenReturn(balance1);
     when(economyMock.getBalance(player2)).thenReturn(balance2);
+    when(economyRepositoryMock.saveAllBalances(anyMap())).thenReturn(CompletableFuture.completedFuture(null));
 
     // Act
     testee.saveAllBalances();
