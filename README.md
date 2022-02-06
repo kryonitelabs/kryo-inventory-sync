@@ -37,7 +37,7 @@ kryo-player-sync needs the following services to be installed and configured to 
 It is not recommended using the root user of the [MariaDB](https://mariadb.org/) server for kryo-player-sync. Please create an extra database with an extra user that is limited to that database.
 
 ## Functionality
-The following images illustrate the workflow when a player joins the network and when a player switches from one [Paper](https://github.com/PaperMC/Paper) server to another [Paper](https://github.com/PaperMC/Paper).
+The following images illustrate the workflow when a player joins the network and when a player switches from one [Paper](https://github.com/PaperMC/Paper) server to another.  
 ![Initial-Join](docs/initial-join.svg)
 ![Server-Switch](docs/server-switch.svg)
 
