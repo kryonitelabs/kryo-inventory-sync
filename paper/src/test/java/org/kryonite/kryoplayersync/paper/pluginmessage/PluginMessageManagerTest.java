@@ -3,6 +3,7 @@ package org.kryonite.kryoplayersync.paper.pluginmessage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -74,6 +75,27 @@ class PluginMessageManagerTest {
     Awaitility.await()
         .atMost(1, TimeUnit.SECONDS)
         .untilAsserted(() -> verify(messagingControllerMock).sendPlayerDataReadyMessage(uniqueId));
+  }
 
+  @Test
+  void shouldNotSendPlayerDataReadyMessage_WhenSavePlayerDataFails() {
+    // Arrange
+    Player player = mock(Player.class);
+    UUID uniqueId = UUID.randomUUID();
+
+    when(player.getUniqueId()).thenReturn(uniqueId);
+    when(playerDataSyncManagerMock.savePlayerData(player))
+        .thenReturn(CompletableFuture.failedFuture(new RuntimeException()));
+
+    // Act
+    testee.preparePlayerDataForServerSwitch(player);
+
+    // Assert
+    verify(playerDataSyncManagerMock).addSwitchingServers(uniqueId);
+    verify(playerDataSyncManagerMock).savePlayerData(player);
+
+    Awaitility.await()
+        .timeout(1, TimeUnit.SECONDS)
+        .untilAsserted(() -> verify(messagingControllerMock, never()).sendPlayerDataReadyMessage(uniqueId));
   }
 }

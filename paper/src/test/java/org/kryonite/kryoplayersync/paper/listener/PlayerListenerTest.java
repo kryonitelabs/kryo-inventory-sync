@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.CompletableFuture;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -68,6 +69,7 @@ class PlayerListenerTest {
     );
 
     when(playerDataSyncManagerMock.isSwitchingServers(any())).thenReturn(false);
+    when(playerDataSyncManagerMock.savePlayerData(player)).thenReturn(CompletableFuture.completedFuture(null));
 
     // Act
     testee.onPlayerQuit(playerQuitEvent);
