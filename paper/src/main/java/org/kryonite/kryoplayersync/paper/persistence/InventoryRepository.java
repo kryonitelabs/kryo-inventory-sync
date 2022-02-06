@@ -1,15 +1,15 @@
 package org.kryonite.kryoplayersync.paper.persistence;
 
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public interface InventoryRepository {
 
-  void save(UUID uniqueId, byte[] inventory) throws SQLException;
+  CompletableFuture<Void> save(UUID uniqueId, byte[] inventory);
 
-  void saveAll(Map<UUID, byte[]> inventories) throws SQLException;
+  CompletableFuture<Void> saveAll(Map<UUID, byte[]> inventories);
 
-  Optional<byte[]> get(UUID uniqueId) throws SQLException;
+  CompletableFuture<Optional<byte[]>> get(UUID uniqueId);
 }

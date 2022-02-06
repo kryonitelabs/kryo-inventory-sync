@@ -1,15 +1,15 @@
 package org.kryonite.kryoplayersync.paper.persistence;
 
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public interface EconomyRepository {
 
-  Optional<Double> getBalance(UUID uniqueId) throws SQLException;
+  CompletableFuture<Optional<Double>> getBalance(UUID uniqueId);
 
-  void saveBalance(UUID uniqueId, double balance) throws SQLException;
+  CompletableFuture<Void> saveBalance(UUID uniqueId, double balance);
 
-  void saveAllBalances(Map<UUID, Double> balances) throws SQLException;
+  CompletableFuture<Void> saveAllBalances(Map<UUID, Double> balances);
 }

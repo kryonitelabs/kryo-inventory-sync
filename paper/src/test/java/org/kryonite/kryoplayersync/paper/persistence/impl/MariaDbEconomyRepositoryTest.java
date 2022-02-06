@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
@@ -36,7 +37,7 @@ class MariaDbEconomyRepositoryTest {
   }
 
   @Test
-  void shouldSaveInventory() throws SQLException {
+  void shouldSaveInventory() throws SQLException, ExecutionException, InterruptedException {
     // Arrange
     UUID uniqueId = UUID.randomUUID();
     double balance = 12;
@@ -44,7 +45,7 @@ class MariaDbEconomyRepositoryTest {
     MariaDbEconomyRepository testee = new MariaDbEconomyRepository(dataSourceMock);
 
     // Act
-    testee.saveBalance(uniqueId, balance);
+    testee.saveBalance(uniqueId, balance).get();
 
     // Assert
     verify(dataSourceMock.getConnection()).prepareStatement(INSERT_BALANCE);
@@ -56,7 +57,7 @@ class MariaDbEconomyRepositoryTest {
   }
 
   @Test
-  void shouldReturnInventory() throws SQLException {
+  void shouldReturnInventory() throws SQLException, ExecutionException, InterruptedException {
     // Arrange
     UUID uniqueId = UUID.randomUUID();
     double balance = 15;
@@ -67,7 +68,7 @@ class MariaDbEconomyRepositoryTest {
         .thenReturn(balance);
 
     // Act
-    Optional<Double> result = testee.getBalance(uniqueId);
+    Optional<Double> result = testee.getBalance(uniqueId).get();
 
     // Assert
     assertTrue(result.isPresent());
@@ -77,7 +78,7 @@ class MariaDbEconomyRepositoryTest {
   }
 
   @Test
-  void shouldSaveAllInventories() throws SQLException {
+  void shouldSaveAllInventories() throws SQLException, ExecutionException, InterruptedException {
     // Arrange
     UUID uniqueId1 = UUID.randomUUID();
     UUID uniqueId2 = UUID.randomUUID();
@@ -87,7 +88,7 @@ class MariaDbEconomyRepositoryTest {
     MariaDbEconomyRepository testee = new MariaDbEconomyRepository(dataSourceMock);
 
     // Act
-    testee.saveAllBalances(Map.of(uniqueId1, balance1, uniqueId2, balance2));
+    testee.saveAllBalances(Map.of(uniqueId1, balance1, uniqueId2, balance2)).get();
 
     // Assert
     verify(dataSourceMock.getConnection()).prepareStatement(INSERT_BALANCE);

@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import org.kryonite.kryoplayersync.paper.persistence.InventoryRepository;
 
 public class MariaDbInventoryRepository implements InventoryRepository {
@@ -33,47 +35,59 @@ public class MariaDbInventoryRepository implements InventoryRepository {
   }
 
   @Override
-  public void save(UUID uniqueId, byte[] inventory) throws SQLException {
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(INSERT_INVENTORY)) {
-      preparedStatement.setString(1, uniqueId.toString());
-      preparedStatement.setBytes(2, inventory);
-      preparedStatement.setBytes(3, inventory);
+  public CompletableFuture<Void> save(UUID uniqueId, byte[] inventory) {
+    return CompletableFuture.runAsync(() -> {
+      try (Connection connection = dataSource.getConnection();
+           PreparedStatement preparedStatement = connection.prepareStatement(INSERT_INVENTORY)) {
+        preparedStatement.setString(1, uniqueId.toString());
+        preparedStatement.setBytes(2, inventory);
+        preparedStatement.setBytes(3, inventory);
 
-      preparedStatement.executeUpdate();
-    }
+        preparedStatement.executeUpdate();
+      } catch (SQLException exception) {
+        throw new CompletionException(exception);
+      }
+    });
   }
 
   @Override
-  public void saveAll(Map<UUID, byte[]> inventories) throws SQLException {
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(INSERT_INVENTORY)) {
-      connection.setAutoCommit(false);
+  public CompletableFuture<Void> saveAll(Map<UUID, byte[]> inventories) {
+    return CompletableFuture.runAsync(() -> {
+      try (Connection connection = dataSource.getConnection();
+           PreparedStatement preparedStatement = connection.prepareStatement(INSERT_INVENTORY)) {
+        connection.setAutoCommit(false);
 
-      for (Map.Entry<UUID, byte[]> entry : inventories.entrySet()) {
-        preparedStatement.setString(1, entry.getKey().toString());
-        preparedStatement.setBytes(2, entry.getValue());
-        preparedStatement.setBytes(3, entry.getValue());
-        preparedStatement.addBatch();
+        for (Map.Entry<UUID, byte[]> entry : inventories.entrySet()) {
+          preparedStatement.setString(1, entry.getKey().toString());
+          preparedStatement.setBytes(2, entry.getValue());
+          preparedStatement.setBytes(3, entry.getValue());
+          preparedStatement.addBatch();
+        }
+
+        preparedStatement.executeBatch();
+        connection.commit();
+        connection.setAutoCommit(true);
+      } catch (SQLException exception) {
+        throw new CompletionException(exception);
       }
-
-      preparedStatement.executeBatch();
-      connection.commit();
-      connection.setAutoCommit(true);
-    }
+    });
   }
 
   @Override
-  public Optional<byte[]> get(UUID uniqueId) throws SQLException {
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(GET_INVENTORY)) {
-      preparedStatement.setString(1, uniqueId.toString());
+  public CompletableFuture<Optional<byte[]>> get(UUID uniqueId) {
+    return CompletableFuture.supplyAsync(() -> {
+      try (Connection connection = dataSource.getConnection();
+           PreparedStatement preparedStatement = connection.prepareStatement(GET_INVENTORY)) {
+        preparedStatement.setString(1, uniqueId.toString());
 
-      ResultSet resultSet = preparedStatement.executeQuery();
-      if (resultSet.first()) {
-        return Optional.of(resultSet.getBytes("data"));
+        ResultSet resultSet = preparedStatement.executeQuery();
+        if (resultSet.first()) {
+          return Optional.of(resultSet.getBytes("data"));
+        }
+        return Optional.empty();
+      } catch (SQLException exception) {
+        throw new CompletionException(exception);
       }
-      return Optional.empty();
-    }
+    });
   }
 }

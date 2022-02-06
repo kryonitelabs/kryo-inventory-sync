@@ -3,6 +3,7 @@ package org.kryonite.kryoplayersync.paper.playerdatasync;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -108,8 +109,7 @@ public class PlayerDataSyncManager {
     economySyncManager.loadBalance(player);
   }
 
-  public void savePlayerData(Player player) {
-    inventorySyncManager.saveInventory(player);
-    economySyncManager.saveBalance(player);
+  public CompletableFuture<Void> savePlayerData(Player player) {
+    return CompletableFuture.allOf(inventorySyncManager.saveInventory(player), economySyncManager.saveBalance(player));
   }
 }

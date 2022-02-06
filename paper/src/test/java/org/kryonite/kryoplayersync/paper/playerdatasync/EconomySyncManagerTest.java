@@ -5,14 +5,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import net.kyori.adventure.text.Component;
 import net.milkbowl.vault.economy.Economy;
+import org.awaitility.Awaitility;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kryonite.kryoplayersync.paper.persistence.EconomyRepository;
@@ -27,7 +31,7 @@ class EconomySyncManagerTest {
   @InjectMocks
   private EconomySyncManager testee;
 
-  @Mock
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private EconomyRepository economyRepositoryMock;
 
   @Mock
@@ -36,8 +40,11 @@ class EconomySyncManagerTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private Server serverMock;
 
+  @Mock
+  private Plugin pluginMock;
+
   @Test
-  void shouldSaveBalance() throws SQLException {
+  void shouldSaveBalance() {
     // Arrange
     Player player = mock(Player.class);
     UUID uniqueId = UUID.randomUUID();
@@ -54,7 +61,7 @@ class EconomySyncManagerTest {
   }
 
   @Test
-  void shouldLoadBalance() throws SQLException {
+  void shouldLoadBalance() {
     // Arrange
     Player player = mock(Player.class);
     UUID uniqueId = UUID.randomUUID();
@@ -63,7 +70,8 @@ class EconomySyncManagerTest {
 
     when(player.getUniqueId()).thenReturn(uniqueId);
     when(economyMock.getBalance(player)).thenReturn(oldBalance);
-    when(economyRepositoryMock.getBalance(uniqueId)).thenReturn(Optional.of(balance));
+    when(economyRepositoryMock.getBalance(uniqueId))
+        .thenReturn(CompletableFuture.completedFuture(Optional.of(balance)));
 
     // Act
     testee.loadBalance(player);
@@ -74,7 +82,26 @@ class EconomySyncManagerTest {
   }
 
   @Test
-  void shouldSaveAllBalances() throws SQLException {
+  void shouldKickPlayer_WhenLoadBalanceFails() {
+    // Arrange
+    Player player = mock(Player.class, Answers.RETURNS_DEEP_STUBS);
+    UUID uniqueId = UUID.randomUUID();
+
+    when(player.getUniqueId()).thenReturn(uniqueId);
+    when(economyRepositoryMock.getBalance(uniqueId)).thenReturn(CompletableFuture.failedFuture(new RuntimeException()));
+
+    // Act
+    testee.loadBalance(player);
+
+    // Assert
+    Awaitility.await()
+        .atMost(1, TimeUnit.SECONDS)
+        .untilAsserted(() -> serverMock.getScheduler().runTask(pluginMock,
+            () -> player.kick(Component.text("Failed to load player data. Please try again"))));
+  }
+
+  @Test
+  void shouldSaveAllBalances() {
     // Arrange
     Player player1 = mock(Player.class);
     Player player2 = mock(Player.class);

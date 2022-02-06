@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kryonite.kryoplayersync.paper.playerdatasync.PlayerDataSyncManager;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,7 +24,7 @@ class PlayerListenerTest {
   @InjectMocks
   private PlayerListener testee;
 
-  @Mock
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private PlayerDataSyncManager playerDataSyncManagerMock;
 
   @Test
