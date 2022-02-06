@@ -2,9 +2,17 @@ package org.kryonite.kryoplayersync.paper.pluginmessage;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import org.awaitility.Awaitility;
 import org.bukkit.Server;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,5 +54,48 @@ class PluginMessageManagerTest {
     // Assert
     verify(serverMock.getMessenger()).registerIncomingPluginChannel(eq(pluginMock), eq(channel1), any());
     verify(serverMock.getMessenger()).registerIncomingPluginChannel(eq(pluginMock), eq(channel2), any());
+  }
+
+  @Test
+  void shouldPreparePlayerDataForServerSwitch() {
+    // Arrange
+    Player player = mock(Player.class);
+    UUID uniqueId = UUID.randomUUID();
+
+    when(player.getUniqueId()).thenReturn(uniqueId);
+    when(playerDataSyncManagerMock.savePlayerData(player)).thenReturn(CompletableFuture.completedFuture(null));
+
+    // Act
+    testee.preparePlayerDataForServerSwitch(player);
+
+    // Assert
+    verify(playerDataSyncManagerMock).addSwitchingServers(uniqueId);
+    verify(playerDataSyncManagerMock).savePlayerData(player);
+
+    Awaitility.await()
+        .atMost(1, TimeUnit.SECONDS)
+        .untilAsserted(() -> verify(messagingControllerMock).sendPlayerDataReadyMessage(uniqueId));
+  }
+
+  @Test
+  void shouldNotSendPlayerDataReadyMessage_WhenSavePlayerDataFails() {
+    // Arrange
+    Player player = mock(Player.class);
+    UUID uniqueId = UUID.randomUUID();
+
+    when(player.getUniqueId()).thenReturn(uniqueId);
+    when(playerDataSyncManagerMock.savePlayerData(player))
+        .thenReturn(CompletableFuture.failedFuture(new RuntimeException()));
+
+    // Act
+    testee.preparePlayerDataForServerSwitch(player);
+
+    // Assert
+    verify(playerDataSyncManagerMock).addSwitchingServers(uniqueId);
+    verify(playerDataSyncManagerMock).savePlayerData(player);
+
+    Awaitility.await()
+        .timeout(1, TimeUnit.SECONDS)
+        .untilAsserted(() -> verify(messagingControllerMock, never()).sendPlayerDataReadyMessage(uniqueId));
   }
 }

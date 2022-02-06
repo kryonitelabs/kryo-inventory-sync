@@ -72,8 +72,8 @@ public class KryoPlayerSyncPlugin extends JavaPlugin {
       return;
     }
 
-    InventorySyncManager inventorySyncManager = new InventorySyncManager(inventoryRepository, getServer());
-    EconomySyncManager economySyncManager = new EconomySyncManager(economyRepository, economy, getServer());
+    InventorySyncManager inventorySyncManager = new InventorySyncManager(inventoryRepository, getServer(), this);
+    EconomySyncManager economySyncManager = new EconomySyncManager(economyRepository, economy, getServer(), this);
 
     PlayerDataSyncManager playerDataSyncManager = new PlayerDataSyncManager(
         inventorySyncManager,

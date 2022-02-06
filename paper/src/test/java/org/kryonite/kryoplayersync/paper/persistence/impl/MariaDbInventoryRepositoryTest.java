@@ -1,6 +1,7 @@
 package org.kryonite.kryoplayersync.paper.persistence.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.kryonite.kryoplayersync.paper.persistence.impl.MariaDbInventoryRepository.CREATE_INVENTORY_TABLE;
 import static org.kryonite.kryoplayersync.paper.persistence.impl.MariaDbInventoryRepository.GET_INVENTORY;
@@ -14,6 +15,8 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
@@ -36,7 +39,7 @@ class MariaDbInventoryRepositoryTest {
   }
 
   @Test
-  void shouldSaveInventory() throws SQLException {
+  void shouldSaveInventory() throws SQLException, ExecutionException, InterruptedException {
     // Arrange
     UUID uniqueId = UUID.randomUUID();
     byte[] inventory = new byte[] {12, 13};
@@ -44,7 +47,7 @@ class MariaDbInventoryRepositoryTest {
     MariaDbInventoryRepository testee = new MariaDbInventoryRepository(dataSourceMock);
 
     // Act
-    testee.save(uniqueId, inventory);
+    testee.save(uniqueId, inventory).get();
 
     // Assert
     verify(dataSourceMock.getConnection()).prepareStatement(INSERT_INVENTORY);
@@ -56,7 +59,20 @@ class MariaDbInventoryRepositoryTest {
   }
 
   @Test
-  void shouldReturnInventory() throws SQLException {
+  void shouldThrowException_WhenSaveInventoryFails() throws SQLException {
+    // Arrange
+    UUID uniqueId = UUID.randomUUID();
+    byte[] inventory = new byte[] {12, 13};
+
+    MariaDbInventoryRepository testee = new MariaDbInventoryRepository(dataSourceMock);
+    when(dataSourceMock.getConnection()).thenThrow(new SQLException());
+
+    // Act - Assert
+    assertThrows(ExecutionException.class, () -> testee.save(uniqueId, inventory).get());
+  }
+
+  @Test
+  void shouldReturnInventory() throws SQLException, ExecutionException, InterruptedException {
     // Arrange
     UUID uniqueId = UUID.randomUUID();
     byte[] inventory = new byte[] {12, 13};
@@ -67,7 +83,7 @@ class MariaDbInventoryRepositoryTest {
         .thenReturn(inventory);
 
     // Act
-    Optional<byte[]> result = testee.get(uniqueId);
+    Optional<byte[]> result = testee.get(uniqueId).get();
 
     // Assert
     assertTrue(result.isPresent());
@@ -77,7 +93,19 @@ class MariaDbInventoryRepositoryTest {
   }
 
   @Test
-  void shouldSaveAllInventories() throws SQLException {
+  void shouldThrowException_WhenReturnInventoryFails() throws SQLException {
+    // Arrange
+    UUID uniqueId = UUID.randomUUID();
+
+    MariaDbInventoryRepository testee = new MariaDbInventoryRepository(dataSourceMock);
+    when(dataSourceMock.getConnection()).thenThrow(new SQLException());
+
+    // Act - Assert
+    assertThrows(ExecutionException.class, () -> testee.get(uniqueId).get());
+  }
+
+  @Test
+  void shouldSaveAllInventories() throws SQLException, ExecutionException, InterruptedException {
     // Arrange
     UUID uniqueId1 = UUID.randomUUID();
     UUID uniqueId2 = UUID.randomUUID();
@@ -87,7 +115,7 @@ class MariaDbInventoryRepositoryTest {
     MariaDbInventoryRepository testee = new MariaDbInventoryRepository(dataSourceMock);
 
     // Act
-    testee.saveAll(Map.of(uniqueId1, inventory1, uniqueId2, inventory2));
+    testee.saveAll(Map.of(uniqueId1, inventory1, uniqueId2, inventory2)).get();
 
     // Assert
     verify(dataSourceMock.getConnection()).prepareStatement(INSERT_INVENTORY);
@@ -100,5 +128,21 @@ class MariaDbInventoryRepositoryTest {
 
     verify(dataSourceMock.getConnection().prepareStatement(INSERT_INVENTORY)).executeBatch();
     verify(dataSourceMock.getConnection()).commit();
+  }
+
+  @Test
+  void shouldThrowException_WhenSaveAllInventoriesFails() throws SQLException {
+    // Arrange
+    UUID uniqueId1 = UUID.randomUUID();
+    UUID uniqueId2 = UUID.randomUUID();
+    byte[] inventory1 = new byte[] {12, 13};
+    byte[] inventory2 = new byte[] {14, 15};
+
+    MariaDbInventoryRepository testee = new MariaDbInventoryRepository(dataSourceMock);
+    when(dataSourceMock.getConnection()).thenThrow(new SQLException());
+
+    // Act - Assert
+    assertThrows(ExecutionException.class,
+        () -> testee.saveAll(Map.of(uniqueId1, inventory1, uniqueId2, inventory2)).get());
   }
 }

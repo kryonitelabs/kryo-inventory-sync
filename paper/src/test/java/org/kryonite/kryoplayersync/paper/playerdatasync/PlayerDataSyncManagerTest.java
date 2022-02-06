@@ -1,7 +1,6 @@
 package org.kryonite.kryoplayersync.paper.playerdatasync;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,10 +23,10 @@ class PlayerDataSyncManagerTest {
   @InjectMocks
   private PlayerDataSyncManager testee;
 
-  @Mock
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private InventorySyncManager inventorySyncManagerMock;
 
-  @Mock
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private EconomySyncManager economySyncManagerMock;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)

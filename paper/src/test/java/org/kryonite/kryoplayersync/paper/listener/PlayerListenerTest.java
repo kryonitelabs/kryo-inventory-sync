@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.CompletableFuture;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -13,6 +14,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kryonite.kryoplayersync.paper.playerdatasync.PlayerDataSyncManager;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,7 +25,7 @@ class PlayerListenerTest {
   @InjectMocks
   private PlayerListener testee;
 
-  @Mock
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private PlayerDataSyncManager playerDataSyncManagerMock;
 
   @Test
@@ -67,6 +69,7 @@ class PlayerListenerTest {
     );
 
     when(playerDataSyncManagerMock.isSwitchingServers(any())).thenReturn(false);
+    when(playerDataSyncManagerMock.savePlayerData(player)).thenReturn(CompletableFuture.completedFuture(null));
 
     // Act
     testee.onPlayerQuit(playerQuitEvent);

@@ -1,20 +1,27 @@
 package org.kryonite.kryoplayersync.paper.playerdatasync;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.sql.SQLException;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import net.kyori.adventure.text.Component;
+import org.awaitility.Awaitility;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.plugin.Plugin;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kryonite.kryoplayersync.paper.persistence.InventoryRepository;
@@ -31,14 +38,17 @@ class InventorySyncManagerTest {
   @InjectMocks
   private InventorySyncManager testee;
 
-  @Mock
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private InventoryRepository inventoryRepositoryMock;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private Server serverMock;
 
+  @Mock
+  private Plugin pluginMock;
+
   @Test
-  void shouldSaveInventory() throws SQLException {
+  void shouldSaveInventory() throws ExecutionException, InterruptedException {
     // Arrange
     Player player = mock(Player.class);
     UUID uniqueId = UUID.randomUUID();
@@ -54,7 +64,7 @@ class InventorySyncManagerTest {
           .thenReturn(inventory);
 
       // Act
-      testee.saveInventory(player);
+      testee.saveInventory(player).get();
 
       // Assert
       verify(inventoryRepositoryMock).save(uniqueId, inventory);
@@ -62,7 +72,25 @@ class InventorySyncManagerTest {
   }
 
   @Test
-  void shouldLoadInventory() throws SQLException {
+  void shouldReturnFailedFuture_WhenSerializeInventoryFails() {
+    // Arrange
+    Player player = mock(Player.class);
+    PlayerInventory playerInventory = mock(PlayerInventory.class);
+
+    when(player.getInventory()).thenReturn(playerInventory);
+
+    try (MockedStatic<SerializeInventory> serializeInventoryMockedStatic = mockStatic(SerializeInventory.class)) {
+      serializeInventoryMockedStatic
+          .when(() -> SerializeInventory.toByteArray(playerInventory))
+          .thenThrow(new IOException());
+
+      // Act - Assert
+      assertThrows(ExecutionException.class, () -> testee.saveInventory(player).get());
+    }
+  }
+
+  @Test
+  void shouldLoadInventory() {
     // Arrange
     Player player = mock(Player.class, Answers.RETURNS_DEEP_STUBS);
     UUID uniqueId = UUID.randomUUID();
@@ -74,7 +102,7 @@ class InventorySyncManagerTest {
     };
 
     when(player.getUniqueId()).thenReturn(uniqueId);
-    when(inventoryRepositoryMock.get(uniqueId)).thenReturn(Optional.of(inventory));
+    when(inventoryRepositoryMock.get(uniqueId)).thenReturn(CompletableFuture.completedFuture(Optional.of(inventory)));
 
     try (MockedStatic<SerializeInventory> serializeInventoryMockedStatic = mockStatic(SerializeInventory.class)) {
       serializeInventoryMockedStatic
@@ -85,12 +113,60 @@ class InventorySyncManagerTest {
       testee.loadInventory(player);
 
       // Assert
-      verify(player.getInventory()).setContents(itemStacks);
+      Awaitility.await()
+          .atMost(1, TimeUnit.SECONDS)
+          .untilAsserted(() -> serverMock.getScheduler().runTask(pluginMock,
+              () -> player.getInventory().setContents(itemStacks)));
     }
   }
 
   @Test
-  void shouldSyncAllRepositories() throws SQLException {
+  void shouldKickPlayer_WhenLoadInventoryFails() {
+    // Arrange
+    Player player = mock(Player.class, Answers.RETURNS_DEEP_STUBS);
+    UUID uniqueId = UUID.randomUUID();
+
+    when(player.getUniqueId()).thenReturn(uniqueId);
+    when(inventoryRepositoryMock.get(uniqueId)).thenReturn(CompletableFuture.failedFuture(new RuntimeException()));
+
+    // Act
+    testee.loadInventory(player);
+
+    // Assert
+    Awaitility.await()
+        .atMost(1, TimeUnit.SECONDS)
+        .untilAsserted(() -> serverMock.getScheduler().runTask(pluginMock,
+            () -> player.kick(Component.text("Failed to load player data. Please try again"))));
+  }
+
+  @Test
+  void shouldKickPlayer_WhenSerializeInventoryFails() {
+    // Arrange
+    Player player = mock(Player.class, Answers.RETURNS_DEEP_STUBS);
+    UUID uniqueId = UUID.randomUUID();
+    byte[] inventory = new byte[] {11, 12};
+
+    when(player.getUniqueId()).thenReturn(uniqueId);
+    when(inventoryRepositoryMock.get(uniqueId)).thenReturn(CompletableFuture.completedFuture(Optional.of(inventory)));
+
+    try (MockedStatic<SerializeInventory> serializeInventoryMockedStatic = mockStatic(SerializeInventory.class)) {
+      serializeInventoryMockedStatic
+          .when(() -> SerializeInventory.toItemStackArray(inventory))
+          .thenThrow(new IOException());
+
+      // Act
+      testee.loadInventory(player);
+
+      // Assert
+      Awaitility.await()
+          .atMost(1, TimeUnit.SECONDS)
+          .untilAsserted(() -> serverMock.getScheduler().runTask(pluginMock,
+              () -> player.kick(Component.text("Failed to load player data. Please try again"))));
+    }
+  }
+
+  @Test
+  void shouldSyncAllRepositories() {
     // Arrange
     UUID uniqueId1 = UUID.randomUUID();
     UUID uniqueId2 = UUID.randomUUID();
