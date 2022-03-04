@@ -4,7 +4,7 @@ repositories {
 }
 
 dependencies {
-    val paperVersion = "1.18.1-R0.1-SNAPSHOT"
+    val paperVersion = "1.18.2-R0.1-SNAPSHOT"
     val vaultVersion = "1.7.1"
 
     implementation(project(":kryo-player-sync-common"))
