@@ -18,5 +18,5 @@ dependencies {
 
     testImplementation("io.papermc.paper:paper-api:$paperVersion")
     testImplementation("com.github.MilkBowl:VaultAPI:$vaultVersion")
-    testImplementation("org.awaitility:awaitility:4.1.1")
+    testImplementation("org.awaitility:awaitility:4.2.0")
 }
