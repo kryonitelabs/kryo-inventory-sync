@@ -24,7 +24,7 @@ allprojects {
 
     dependencies {
         val junitVersion = "5.9.0"
-        val mockitoVersion = "4.7.0"
+        val mockitoVersion = "4.8.0"
 
         testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
         testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
